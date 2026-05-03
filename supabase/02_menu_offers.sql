@@ -3,10 +3,14 @@
 -- Run AFTER 01_tischly_full.sql
 -- =====================================================================
 
+-- Drop old (broken) tables first so we start clean
+drop table if exists public.offers cascade;
+drop table if exists public.menu_items cascade;
+
 -- =====================================================================
 -- 1. MENU ITEMS TABLE
 -- =====================================================================
-create table if not exists public.menu_items (
+create table public.menu_items (
   id            text primary key,
   restaurant_id uuid references public.restaurants(id) on delete cascade,
   category      text not null,
@@ -39,7 +43,7 @@ create policy "service role manage menu items" on public.menu_items
 -- =====================================================================
 -- 2. OFFERS TABLE
 -- =====================================================================
-create table if not exists public.offers (
+create table public.offers (
   id            text primary key,
   restaurant_id uuid references public.restaurants(id) on delete cascade,
   title         jsonb not null default '{}',
