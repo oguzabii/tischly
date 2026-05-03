@@ -5,8 +5,10 @@ import { menuItems } from '../mockData'
 
 interface AppState {
   lang: Lang
+  langSelected: boolean
   tableId: string | null
   setLang: (lang: Lang) => void
+  setLangSelected: (v: boolean) => void
   setTableId: (id: string) => void
 
   // Cart
@@ -27,8 +29,10 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       lang: 'de',
+      langSelected: false,
       tableId: null,
       setLang: (lang) => set({ lang }),
+      setLangSelected: (langSelected) => set({ langSelected }),
       setTableId: (tableId) => set({ tableId }),
 
       cartItems: [],
@@ -75,6 +79,6 @@ export const useAppStore = create<AppState>()(
       activeView: 'home',
       setActiveView: (view) => set({ activeView: view }),
     }),
-    { name: 'tischly-store', partialize: (s) => ({ lang: s.lang, cartItems: s.cartItems }) }
+    { name: 'tischly-store', partialize: (s) => ({ lang: s.lang, langSelected: s.langSelected, cartItems: s.cartItems }) }
   )
 )

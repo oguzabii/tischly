@@ -4,14 +4,19 @@ import { useState } from 'react'
 import { menuItems, tables, offers } from '@/lib/mockData'
 import {
   LayoutDashboard, ClipboardList, UtensilsCrossed, Tag,
-  Table2, BarChart3, LogOut, TrendingUp, Users, DollarSign, Clock
+  Table2, BarChart3, LogOut, TrendingUp, Users, DollarSign, Clock,
+  Megaphone, Palette, Star
 } from 'lucide-react'
 import AdminOrders from './AdminOrders'
 import AdminMenu from './AdminMenu'
 import AdminTables from './AdminTables'
 import AdminAnalytics from './AdminAnalytics'
+import { AdsAdmin } from './AdsAdmin'
+import { BrandingAdmin } from './BrandingAdmin'
+import { GuestsAdmin } from './GuestsAdmin'
+import { LoyaltyAdmin } from './LoyaltyAdmin'
 
-type Tab = 'dashboard' | 'orders' | 'menu' | 'offers' | 'tables' | 'analytics'
+type Tab = 'dashboard' | 'orders' | 'menu' | 'offers' | 'tables' | 'analytics' | 'ads' | 'branding' | 'guests' | 'loyalty'
 
 const NAV: { id: Tab; icon: React.ElementType; label: string }[] = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -20,6 +25,10 @@ const NAV: { id: Tab; icon: React.ElementType; label: string }[] = [
   { id: 'offers',    icon: Tag,             label: 'Angebote' },
   { id: 'tables',    icon: Table2,          label: 'Tische' },
   { id: 'analytics', icon: BarChart3,       label: 'Analytik' },
+  { id: 'ads',       icon: Megaphone,       label: 'Ads' },
+  { id: 'branding',  icon: Palette,         label: 'Branding' },
+  { id: 'guests',    icon: Users,           label: 'Guests' },
+  { id: 'loyalty',   icon: Star,            label: 'Loyalty' },
 ]
 
 const MOCK_ORDERS = [
@@ -89,6 +98,10 @@ export default function AdminDashboard() {
       case 'tables':    return <AdminTables />
       case 'analytics': return <AdminAnalytics />
       case 'offers':    return <OffersTab />
+      case 'ads':       return <AdsAdmin />
+      case 'branding':  return <BrandingAdmin />
+      case 'guests':    return <GuestsAdmin />
+      case 'loyalty':   return <LoyaltyAdmin />
       default:          return <DashboardTab setTab={setTab} />
     }
   }

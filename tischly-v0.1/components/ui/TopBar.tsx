@@ -1,23 +1,28 @@
 'use client'
 
+import { useState } from 'react'
 import { useAppStore } from '@/lib/store/appStore'
 import { LANGUAGES, t } from '@/lib/i18n'
-import { ShoppingCart, ChevronLeft } from 'lucide-react'
+import { ShoppingCart, ChevronLeft, Star } from 'lucide-react'
 
-interface Props { tableId: string }
+interface Props {
+  tableId: string
+  onLoyalty?: () => void
+}
 
-export default function TopBar({ tableId }: Props) {
+export default function TopBar({ tableId, onLoyalty }: Props) {
   const { lang, setLang, activeView, setActiveView, cartCount } = useAppStore()
   const tr = t(lang)
   const count = cartCount()
+  const [langOpen, setLangOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-5 py-4 bg-[#1C1917]/95 backdrop-blur border-b border-stone-800">
       {/* Left: back or logo */}
-      {activeView !== 'home' ? (
+      {activeView !== 'menu' ? (
         <button
-          onClick={() => setActiveView('home')}
-          className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors active:scale-95"
+          onClick={() => setActiveView('menu')}
+          className="flex items-center gap-2 text-stone-400 active:text-white transition-colors active:scale-95"
         >
           <ChevronLeft size={22} />
           <span className="text-sm">{tr.back}</span>
@@ -30,33 +35,56 @@ export default function TopBar({ tableId }: Props) {
         </div>
       )}
 
-      {/* Right: lang selector + cart */}
+      {/* Right: loyalty + lang selector + cart */}
       <div className="flex items-center gap-3">
-        {/* Language picker */}
-        <div className="relative group">
-          <button className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 transition-colors text-sm">
+
+        {/* Loyalty button */}
+        {onLoyalty && (
+          <button
+            onClick={onLoyalty}
+            className="flex items-center justify-center w-11 h-11 rounded-xl bg-stone-800 active:bg-stone-700 transition-colors active:scale-95"
+          >
+            <Star size={20} className="text-amber-400" />
+          </button>
+        )}
+
+        {/* Language picker — tap to toggle (works on touch) */}
+        <div className="relative">
+          <button
+            onClick={() => setLangOpen((o) => !o)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-stone-800 active:bg-stone-700 transition-colors text-sm min-h-[44px]"
+          >
             <span>{LANGUAGES.find(l => l.code === lang)?.flag}</span>
             <span className="text-stone-300 text-xs">{lang.toUpperCase()}</span>
           </button>
-          {/* Dropdown */}
-          <div className="absolute right-0 top-full mt-2 bg-stone-800 border border-stone-700 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[140px]">
-            {LANGUAGES.map(({ code, label, flag }) => (
-              <button
-                key={code}
-                onClick={() => setLang(code)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-stone-700 first:rounded-t-2xl last:rounded-b-2xl transition-colors text-sm ${lang === code ? 'text-amber-400' : 'text-white'}`}
-              >
-                <span>{flag}</span>
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
+
+          {langOpen && (
+            <>
+              {/* Backdrop to close */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setLangOpen(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 bg-stone-800 border border-stone-700 rounded-2xl shadow-xl z-50 min-w-[160px]">
+                {LANGUAGES.map(({ code, label, flag }) => (
+                  <button
+                    key={code}
+                    onClick={() => { setLang(code); setLangOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left first:rounded-t-2xl last:rounded-b-2xl active:bg-stone-700 transition-colors text-sm ${lang === code ? 'text-amber-400' : 'text-white'}`}
+                  >
+                    <span className="text-xl">{flag}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Cart button */}
         <button
           onClick={() => setActiveView('cart')}
-          className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-stone-800 hover:bg-stone-700 transition-colors active:scale-95"
+          className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-stone-800 active:bg-stone-700 transition-colors active:scale-95"
         >
           <ShoppingCart size={20} className="text-white" />
           {count > 0 && (

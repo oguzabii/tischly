@@ -13,6 +13,16 @@
   box-sizing: border-box;
 }
 
+button, a, [role="button"] {
+  touch-action: manipulation;   /* eliminates 300ms tap delay on iOS */
+  cursor: pointer;
+}
+
+input, textarea, select {
+  touch-action: manipulation;
+  font-size: 16px; /* prevents iOS auto-zoom on focus */
+}
+
 body {
   background: var(--tischly-dark);
   color: #FAFAF9;

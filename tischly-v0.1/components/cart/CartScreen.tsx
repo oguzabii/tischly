@@ -69,7 +69,7 @@ export default function CartScreen() {
                 </p>
               )}
               {item.notes && (
-                <p className="text-stone-500 text-xs mt-0.5 italic">"{item.notes}"</p>
+                <p className="text-stone-500 text-xs mt-0.5 italic">&quot;{item.notes}&quot;</p>
               )}
               <p className="text-amber-400 font-bold mt-1">CHF {item.price.toFixed(2)}</p>
             </div>

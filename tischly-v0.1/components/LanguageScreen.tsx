@@ -36,14 +36,14 @@ export default function LanguageScreen({ onSelect }: Props) {
               key={code}
               onClick={() => choose(code)}
               className={`
-                flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200
+                flex items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 active:scale-95
                 ${lang === code
                   ? 'border-amber-400 bg-amber-400/10 text-amber-400'
-                  : 'border-stone-700 bg-stone-800/50 text-white hover:border-stone-500 hover:bg-stone-800 active:scale-95'}
+                  : 'border-stone-700 bg-stone-800/50 text-white active:border-stone-500 active:bg-stone-800'}
               `}
             >
-              <span className="text-3xl">{flag}</span>
-              <span className="text-lg font-semibold">{label}</span>
+              <span className="text-4xl">{flag}</span>
+              <span className="text-xl font-semibold">{label}</span>
             </button>
           ))}
         </div>
