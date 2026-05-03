@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { menuItems, tables, offers } from '@/lib/mockData'
+import { tables } from '@/lib/mockData'
 import {
   LayoutDashboard, ClipboardList, UtensilsCrossed, Tag,
-  Table2, BarChart3, LogOut, TrendingUp, Users, DollarSign, Clock,
+  Table2, BarChart3, LogOut, Users, DollarSign, Clock,
   Megaphone, Palette, Star
 } from 'lucide-react'
 import AdminOrders from './AdminOrders'
@@ -15,6 +15,7 @@ import { AdsAdmin } from './AdsAdmin'
 import { BrandingAdmin } from './BrandingAdmin'
 import { GuestsAdmin } from './GuestsAdmin'
 import { LoyaltyAdmin } from './LoyaltyAdmin'
+import OffersAdmin from './OffersAdmin'
 
 type Tab = 'dashboard' | 'orders' | 'menu' | 'offers' | 'tables' | 'analytics' | 'ads' | 'branding' | 'guests' | 'loyalty'
 
@@ -97,7 +98,7 @@ export default function AdminDashboard() {
       case 'menu':      return <AdminMenu />
       case 'tables':    return <AdminTables />
       case 'analytics': return <AdminAnalytics />
-      case 'offers':    return <OffersTab />
+      case 'offers':    return <OffersAdmin />
       case 'ads':       return <AdsAdmin />
       case 'branding':  return <BrandingAdmin />
       case 'guests':    return <GuestsAdmin />
@@ -212,29 +213,3 @@ function DashboardTab({ setTab }: { setTab: (t: Tab) => void }) {
   )
 }
 
-function OffersTab() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Angebote</h1>
-      <div className="space-y-4">
-        {offers.map(o => (
-          <div key={o.id} className="bg-stone-900 border border-stone-800 rounded-2xl p-5 flex items-center gap-5">
-            <div className="w-12 h-12 rounded-xl bg-amber-400/10 flex items-center justify-center text-2xl flex-shrink-0">
-              🎁
-            </div>
-            <div className="flex-1">
-              <p className="text-white font-semibold">{o.title.de}</p>
-              <p className="text-stone-400 text-sm mt-0.5">{o.description.de}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-sm font-bold border border-amber-400/20">
-                {o.discountType === 'percent' ? `${o.discount}%` : `CHF ${o.discount}`}
-              </span>
-              <span className="text-stone-500 text-xs">bis {o.validUntil}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}

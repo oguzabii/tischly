@@ -71,7 +71,7 @@ export default function TableKiosk({ tableId }: Props) {
           tableId={tableId}
           lang={lang}
           onWake={() => { setAwake(true); setActiveView('menu'); }}
-          onChargeRequest={() => { setAwake(true); setChargingOpen(true); }}
+          onChargeRequest={() => { setChargingOpen(true); }}
         />
         {chargingOpen && (
           <ChargeOnboarding

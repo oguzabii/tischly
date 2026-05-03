@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { useAppStore } from '@/lib/store/appStore'
 import { t } from '@/lib/i18n'
-import { menuItems } from '@/lib/mockData'
+import { useMenuItems } from '@/lib/hooks/useMenuItems'
 import type { MenuCategory, MenuItem } from '@/lib/types'
 import type { Guest } from '@/lib/types'
 import MenuItemCard from './MenuItemCard'
 import ProductDetail from './ProductDetail'
-import { Flame, Leaf, Sprout, Wind, QrCode, Star, X } from 'lucide-react'
+import { Flame, Leaf, Sprout, Wind, QrCode, Star, X, Loader2 } from 'lucide-react'
 
 const CATEGORIES: { id: MenuCategory; emoji: string }[] = [
   { id: 'burger',  emoji: '🍔' },
@@ -25,6 +25,7 @@ interface Props {
 export default function MenuScreen({ host, onSignIn }: Props) {
   const { lang } = useAppStore()
   const tr = t(lang)
+  const { items, loading } = useMenuItems()
   const [category, setCategory] = useState<MenuCategory>('burger')
   const [selected, setSelected] = useState<MenuItem | null>(null)
   const [bannerDismissed, setBannerDismissed] = useState(false)
@@ -34,6 +35,7 @@ export default function MenuScreen({ host, onSignIn }: Props) {
   }
 
   const showBanner = !host && !bannerDismissed && onSignIn
+  const filtered = items.filter(m => m.category === category && m.available)
 
   return (
     <div className="flex flex-col h-full">
@@ -111,14 +113,22 @@ export default function MenuScreen({ host, onSignIn }: Props) {
 
       {/* Items */}
       <div className="px-4 space-y-4 pb-6">
-        {menuItems.filter(m => m.category === category).map(item => (
-          <MenuItemCard
-            key={item.id}
-            item={item}
-            lang={lang}
-            onSelect={() => setSelected(item)}
-          />
-        ))}
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-stone-500 py-12">Keine Artikel verfügbar</p>
+        ) : (
+          filtered.map(item => (
+            <MenuItemCard
+              key={item.id}
+              item={item}
+              lang={lang}
+              onSelect={() => setSelected(item)}
+            />
+          ))
+        )}
       </div>
     </div>
   )
