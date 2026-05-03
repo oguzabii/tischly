@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Guest, GuestSession, GuestSessionWithGuest } from '@/lib/types';
 
@@ -14,10 +14,17 @@ function getClient() {
 /**
  * Subscribes to guest_sessions for a given table_id and resolves each
  * session's guest record. Returns ALL active sessions (host + companions).
+ *
+ * Uses a unique channel name per hook instance to avoid the Supabase
+ * "cannot add postgres_changes callbacks after subscribe()" error that
+ * occurs in React StrictMode (double-invoke) or when multiple components
+ * try to subscribe to the same channel name.
  */
 export function useGuestSessions(tableId: string) {
   const [sessions, setSessions] = useState<GuestSessionWithGuest[]>([]);
   const [loading, setLoading] = useState(true);
+  // Unique per hook instance — survives re-renders but not StrictMode double-mount
+  const channelName = useRef(`table-${tableId}-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     const supabase = getClient();
@@ -38,13 +45,11 @@ export function useGuestSessions(tableId: string) {
     fetchAll();
 
     const channel = supabase
-      .channel(`table-${tableId}`)
+      .channel(channelName.current)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'guest_sessions', filter: `table_id=eq.${tableId}` },
-        () => {
-          fetchAll();
-        },
+        () => { fetchAll(); },
       )
       .subscribe();
 
@@ -52,6 +57,7 @@ export function useGuestSessions(tableId: string) {
       cancelled = true;
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableId]);
 
   const host = sessions.find((s) => s.role === 'host')?.guest ?? null;
