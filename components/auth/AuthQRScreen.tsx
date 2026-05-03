@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Sparkles, UserPlus, UserRound, Loader2 } from 'lucide-react';
-import { useGuestSessions, newJoinToken } from '@/lib/hooks/useGuestSession';
-import type { Lang } from '@/lib/types';
+import { newJoinToken } from '@/lib/hooks/useGuestSession';
+import type { GuestSessionWithGuest, Lang } from '@/lib/types';
 
 interface AuthQRScreenProps {
   tableId: string;
   lang: Lang;
   hostName?: string | null;
+  sessions: GuestSessionWithGuest[];
   onClose: () => void;
   onAuthenticated: () => void;
 }
@@ -63,10 +64,9 @@ const STRINGS: Record<Lang, {
         quickLogin: 'Acceso rápido aquí', namePlaceholder: 'Tu nombre', startBtn: 'Vamos', orScan: 'o escanea el QR con tu móvil' },
 };
 
-export function AuthQRScreen({ tableId, lang, hostName, onClose, onAuthenticated }: AuthQRScreenProps) {
+export function AuthQRScreen({ tableId, lang, hostName, sessions, onClose, onAuthenticated }: AuthQRScreenProps) {
   const t = STRINGS[lang];
   const [token] = useState(() => newJoinToken());
-  const { sessions } = useGuestSessions(tableId);
 
   // Quick-login state (direct name entry on the tablet)
   const [name, setName]         = useState('');

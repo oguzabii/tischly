@@ -91,6 +91,7 @@ export default function TableKiosk({ tableId }: Props) {
         tableId={tableId}
         lang={lang}
         hostName={null}
+        sessions={sessions}
         onClose={() => setKioskScreen('menu')}
         onAuthenticated={() => setKioskScreen('welcome')}
       />
@@ -104,6 +105,7 @@ export default function TableKiosk({ tableId }: Props) {
         tableId={tableId}
         lang={lang}
         hostName={host?.name ?? null}
+        sessions={sessions}
         onClose={() => setKioskScreen('menu')}
         onAuthenticated={() => setKioskScreen('menu')}
       />
@@ -140,6 +142,7 @@ export default function TableKiosk({ tableId }: Props) {
           tableId={tableId}
           lang={lang}
           hostName={null}
+          sessions={sessions}
           onClose={() => setKioskScreen('menu')}
           onAuthenticated={() => setKioskScreen('welcome')}
         />
@@ -174,9 +177,6 @@ export default function TableKiosk({ tableId }: Props) {
       default:        return <MenuScreen host={host} onSignIn={goSignIn} />;
     }
   };
-
-  // Suppress unused-var warning — sessions is used by AuthQRScreen child
-  void sessions;
 
   return (
     <AnimatedBackground variant={bgVariant} className="kiosk-no-select flex flex-col min-h-screen">
