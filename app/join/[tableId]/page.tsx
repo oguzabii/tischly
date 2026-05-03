@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { CheckCircle2, Loader2, AlertCircle, Mail } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, Mail, UserRound } from 'lucide-react';
 
 function getClient() {
   return createBrowserClient(
@@ -22,10 +22,11 @@ function JoinPageInner() {
   const token     = search.get('token') ?? '';
   const lang      = search.get('lang') ?? 'en';
 
-  const [step, setStep]           = useState<Step>('auth');
-  const [error, setError]         = useState('');
-  const [email, setEmail]         = useState('');
-  const [magicSent, setMagicSent] = useState(false);
+  const [step, setStep]             = useState<Step>('auth');
+  const [error, setError]           = useState('');
+  const [email, setEmail]           = useState('');
+  const [magicSent, setMagicSent]   = useState(false);
+  const [showEmail, setShowEmail]   = useState(false);
 
   // Recover name that was stored before the OAuth / magic-link redirect
   const [name, setName] = useState(() => {
@@ -64,7 +65,6 @@ function JoinPageInner() {
           const j = await res.json().catch(() => ({}));
           throw new Error(j.error || 'Failed to connect to table');
         }
-        // Clean up stored name
         window.localStorage.removeItem('tischly_pending_name');
         setStep('done');
       } catch (e) {
@@ -75,9 +75,33 @@ function JoinPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableId, token]);
 
+  // ── Quick guest join (no auth required) ──────────────────────────────────
+  async function quickJoin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setStep('binding');
+    try {
+      const res = await fetch('/api/guest-quick-join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId, join_token: token, name: name.trim() }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'Failed to connect to table');
+      }
+      setStep('done');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unknown error');
+      setStep('error');
+    }
+  }
+
+  // ── OAuth ─────────────────────────────────────────────────────────────────
   async function signIn(provider: 'google' | 'apple') {
-    const supabase  = getClient();
+    const supabase   = getClient();
     const redirectTo = `${window.location.origin}/join/${tableId}?token=${token}&lang=${lang}`;
+    if (name) window.localStorage.setItem('tischly_pending_name', name);
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo },
@@ -85,12 +109,12 @@ function JoinPageInner() {
     if (err) { setError(err.message); setStep('error'); }
   }
 
+  // ── Magic link ────────────────────────────────────────────────────────────
   async function signInMagic(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !name) return;
     const supabase   = getClient();
     const redirectTo = `${window.location.origin}/join/${tableId}?token=${token}&lang=${lang}`;
-    // Persist name so it survives the email-link redirect
     window.localStorage.setItem('tischly_pending_name', name);
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
@@ -116,24 +140,42 @@ function JoinPageInner() {
         {/* Sign-in form */}
         {step === 'auth' && !magicSent && (
           <div className="space-y-3">
-            <h1 className="text-2xl font-bold mb-1">Sign in</h1>
+            <h1 className="text-2xl font-bold mb-1">Join the table</h1>
             <p className="text-white/60 text-sm mb-6">
               Earn 1 point per CHF spent · 100 points = 1 CHF off
             </p>
 
-            <button
-              onClick={() => signIn('apple')}
-              className="w-full py-4 rounded-xl bg-white text-black font-semibold flex items-center justify-center gap-3 active:opacity-80"
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden>
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-              </svg>
-              Continue with Apple
-            </button>
+            {/* Name field (shared across all methods) */}
+            <input
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 focus:border-lime-400 outline-none text-base"
+            />
 
+            {/* ── Quick guest join (primary CTA) ── */}
+            <form onSubmit={quickJoin}>
+              <button
+                type="submit"
+                disabled={!name.trim()}
+                className="w-full py-4 rounded-xl bg-lime-400 text-slate-900 font-bold text-lg flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
+              >
+                <UserRound className="w-5 h-5" />
+                Continue as Guest
+              </button>
+            </form>
+
+            <div className="flex items-center gap-3 my-2 text-white/40 text-xs">
+              <div className="flex-1 h-px bg-white/10" />
+              or sign in for full account
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            {/* OAuth buttons */}
             <button
               onClick={() => signIn('google')}
-              className="w-full py-4 rounded-xl bg-white text-black font-semibold flex items-center justify-center gap-3 active:opacity-80"
+              className="w-full py-3.5 rounded-xl bg-white/10 border border-white/10 text-white font-semibold flex items-center justify-center gap-3 active:opacity-80 text-sm"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden>
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -144,37 +186,45 @@ function JoinPageInner() {
               Continue with Google
             </button>
 
-            <div className="flex items-center gap-3 my-4 text-white/40 text-xs">
-              <div className="flex-1 h-px bg-white/10" />or<div className="flex-1 h-px bg-white/10" />
-            </div>
+            <button
+              onClick={() => signIn('apple')}
+              className="w-full py-3.5 rounded-xl bg-white/10 border border-white/10 text-white font-semibold flex items-center justify-center gap-3 active:opacity-80 text-sm"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden>
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+              </svg>
+              Continue with Apple
+            </button>
 
-            <form onSubmit={signInMagic} className="space-y-3">
-              <input
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 focus:border-lime-400 outline-none text-base"
-              />
-              <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 focus:border-lime-400 outline-none text-base"
-              />
+            {/* Email magic link (collapsed by default) */}
+            {!showEmail ? (
               <button
-                type="submit"
-                className="w-full py-4 rounded-xl bg-lime-400 text-slate-900 font-semibold flex items-center justify-center gap-2 active:opacity-80"
+                onClick={() => setShowEmail(true)}
+                className="w-full py-3 text-white/50 text-sm underline underline-offset-2 active:opacity-70"
               >
-                <Mail className="w-4 h-4" />
-                Email me a sign-in link
+                Use email instead
               </button>
-            </form>
+            ) : (
+              <form onSubmit={signInMagic} className="space-y-2 pt-1">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 focus:border-lime-400 outline-none text-base"
+                />
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-xl bg-white/10 text-white font-semibold flex items-center justify-center gap-2 active:opacity-80 text-sm"
+                >
+                  <Mail className="w-4 h-4" />
+                  Email me a sign-in link
+                </button>
+              </form>
+            )}
 
-            <p className="text-xs text-white/40 mt-4 text-center">
+            <p className="text-xs text-white/30 mt-4 text-center">
               By continuing you agree to our Privacy Policy.
             </p>
           </div>
