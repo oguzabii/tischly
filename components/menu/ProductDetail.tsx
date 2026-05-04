@@ -35,7 +35,7 @@ export default function ProductDetail({ item, onBack }: Props) {
   }
 
   function handleAdd() {
-    addToCart(item.id, selectedExtras, notes, qty)
+    addToCart(item, selectedExtras, notes, qty)
     setAdded(true)
     setTimeout(() => {
       setAdded(false)

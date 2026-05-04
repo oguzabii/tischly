@@ -3,21 +3,47 @@
 import { useState } from 'react'
 import { useAppStore } from '@/lib/store/appStore'
 import { t } from '@/lib/i18n'
-import { Minus, Plus, Trash2, ShoppingBag, Check, ChevronRight } from 'lucide-react'
+import { Minus, Plus, Trash2, ShoppingBag, Check, ChevronRight, Loader2, AlertCircle } from 'lucide-react'
 
 export default function CartScreen() {
-  const { lang, cartItems, removeFromCart, updateQuantity, cartTotal, clearCart, setActiveView } = useAppStore()
+  const { lang, tableId, guestId, cartItems, removeFromCart, updateQuantity, cartTotal, clearCart, setActiveView, setCurrentOrderId } = useAppStore()
   const tr = t(lang)
   const [ordered, setOrdered] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const total = cartTotal()
 
-  function handleOrder() {
-    setOrdered(true)
-    setTimeout(() => {
-      clearCart()
-      setActiveView('home')
-    }, 2500)
+  async function handleOrder() {
+    if (!tableId || cartItems.length === 0) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table_id: tableId,
+          guest_id: guestId ?? null,
+          items: cartItems,
+          total,
+        }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j.error || 'Bestellung fehlgeschlagen')
+      }
+      const { order_id } = await res.json()
+      setCurrentOrderId(order_id)
+      setOrdered(true)
+      setTimeout(() => {
+        clearCart()
+        setActiveView('menu')
+      }, 2500)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler')
+      setLoading(false)
+    }
   }
 
   if (ordered) {
@@ -113,14 +139,23 @@ export default function CartScreen() {
         </div>
       </div>
 
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400">
+          <AlertCircle size={18} />
+          <span className="text-sm">{error}</span>
+        </div>
+      )}
+
       {/* CTAs */}
       <div className="space-y-3 pb-4">
         <button
           onClick={handleOrder}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-base transition-all active:scale-[0.97]"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-base transition-all active:scale-[0.97] disabled:opacity-60"
         >
-          {tr.cart.orderNow}
-          <ChevronRight size={18} />
+          {loading ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18} />}
+          {loading ? 'Wird bestellt…' : tr.cart.orderNow}
         </button>
         <button
           onClick={() => setActiveView('payment')}

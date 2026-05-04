@@ -33,7 +33,7 @@ export default function MenuItemCard({ item, lang, onSelect }: Props) {
 
   function quickAdd(e: React.MouseEvent) {
     e.stopPropagation()
-    addToCart(item.id, [], '', 1)
+    addToCart(item, [], '', 1)
   }
 
   return (

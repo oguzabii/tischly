@@ -1,19 +1,24 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Lang, CartItem, Extra } from '../types'
-import { menuItems } from '../mockData'
+import type { Lang, CartItem, Extra, MenuItem } from '../types'
 
 interface AppState {
   lang: Lang
   langSelected: boolean
   tableId: string | null
+  restaurantId: string | null
+  guestId: string | null
+  currentOrderId: string | null
   setLang: (lang: Lang) => void
   setLangSelected: (v: boolean) => void
   setTableId: (id: string) => void
+  setRestaurantId: (id: string | null) => void
+  setGuestId: (id: string | null) => void
+  setCurrentOrderId: (id: string | null) => void
 
   // Cart
   cartItems: CartItem[]
-  addToCart: (menuItemId: string, extras: Extra[], notes: string, quantity: number) => void
+  addToCart: (menuItem: Pick<MenuItem, 'id' | 'name' | 'price' | 'image'>, extras: Extra[], notes: string, quantity: number) => void
   removeFromCart: (cartItemId: string) => void
   updateQuantity: (cartItemId: string, quantity: number) => void
   clearCart: () => void
@@ -31,26 +36,30 @@ export const useAppStore = create<AppState>()(
       lang: 'de',
       langSelected: false,
       tableId: null,
+      restaurantId: null,
+      guestId: null,
+      currentOrderId: null,
       setLang: (lang) => set({ lang }),
       setLangSelected: (langSelected) => set({ langSelected }),
       setTableId: (tableId) => set({ tableId }),
+      setRestaurantId: (restaurantId) => set({ restaurantId }),
+      setGuestId: (guestId) => set({ guestId }),
+      setCurrentOrderId: (currentOrderId) => set({ currentOrderId }),
 
       cartItems: [],
 
-      addToCart: (menuItemId, extras, notes, quantity) => {
-        const item = menuItems.find((m) => m.id === menuItemId)
-        if (!item) return
+      addToCart: (menuItem, extras, notes, quantity) => {
         const lang = get().lang
         const extrasTotal = extras.reduce((s, e) => s + e.price, 0)
         const cartItem: CartItem = {
-          id: `${menuItemId}-${Date.now()}`,
-          menuItemId,
-          name: item.name[lang],
-          price: item.price + extrasTotal,
+          id: `${menuItem.id}-${Date.now()}`,
+          menuItemId: menuItem.id,
+          name: menuItem.name[lang],
+          price: menuItem.price + extrasTotal,
           quantity,
           extras,
           notes,
-          image: item.image,
+          image: menuItem.image,
         }
         set((s) => ({ cartItems: [...s.cartItems, cartItem] }))
       },
@@ -79,6 +88,6 @@ export const useAppStore = create<AppState>()(
       activeView: 'home',
       setActiveView: (view) => set({ activeView: view }),
     }),
-    { name: 'tischly-store', partialize: (s) => ({ lang: s.lang, langSelected: s.langSelected, cartItems: s.cartItems }) }
+    { name: 'tischly-store', partialize: (s) => ({ lang: s.lang, langSelected: s.langSelected, cartItems: s.cartItems, guestId: s.guestId, currentOrderId: s.currentOrderId }) }
   )
 )

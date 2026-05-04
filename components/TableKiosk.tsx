@@ -27,7 +27,7 @@ type KioskScreen = 'menu' | 'auth-host' | 'auth-companion' | 'welcome' | 'loyalt
 interface Props { tableId: string }
 
 export default function TableKiosk({ tableId }: Props) {
-  const { setTableId, activeView, setActiveView, lang, langSelected, setLangSelected } = useAppStore();
+  const { setTableId, activeView, setActiveView, lang, langSelected, setLangSelected, setGuestId } = useAppStore();
   const [awake, setAwake]               = useState(false);
   const [kioskScreen, setKioskScreen]   = useState<KioskScreen>('menu');
   const [chargingOpen, setChargingOpen] = useState(false);
@@ -36,6 +36,11 @@ export default function TableKiosk({ tableId }: Props) {
   const { host, companions, sessions } = useGuestSessions(tableId);
 
   useEffect(() => { setTableId(tableId); }, [tableId, setTableId]);
+
+  // Keep guestId in store in sync with realtime host session
+  useEffect(() => {
+    setGuestId(host?.id ?? null);
+  }, [host, setGuestId]);
 
   // When the realtime session arrives while showing welcome (race fix)
   // — also handles the case where auth-host fires onAuthenticated before

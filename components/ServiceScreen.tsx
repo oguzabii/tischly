@@ -37,18 +37,33 @@ const ACTIONS = [
 ] as const
 
 export default function ServiceScreen() {
-  const { lang } = useAppStore()
+  const { lang, tableId } = useAppStore()
   const tr = t(lang)
   const [sent, setSent] = useState<string | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  function trigger(id: string) {
+  async function trigger(id: string) {
+    if (!tableId) return
     setLoading(id)
-    setTimeout(() => {
+    setError(null)
+    try {
+      const res = await fetch('/api/service-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId, type: id }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j.error || 'Fehler')
+      }
       setLoading(null)
       setSent(id)
-      setTimeout(() => setSent(null), 3000)
-    }, 1000)
+      setTimeout(() => setSent(null), 4000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler')
+      setLoading(null)
+    }
   }
 
   return (
@@ -57,6 +72,12 @@ export default function ServiceScreen() {
         <h2 className="text-2xl font-bold text-white">{tr.service.title}</h2>
         <p className="text-stone-400 mt-1">Wir helfen Ihnen gerne weiter</p>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-4">
         {ACTIONS.map(({ id, icon: Icon, color, bg, border }) => {
